@@ -28,7 +28,14 @@
         while (i < len) {
             liTags = liTags + `
                 <li>
-                    <a href="${state.contents[i].id}.html">${state.contents[i].title}</a>
+                    <a onclick="
+                        event.preventDefault();
+                        let action = { type: 'SELECT', id: ${ state.contents[i].id } };
+                        store.dispatch(action);
+                        "
+                        href="${state.contents[i].id}.html">
+                        ${state.contents[i].title}
+                    </a>
                 </li>
             `;
             i += 1;
@@ -56,16 +63,21 @@
         `;
     }
     function reducer(state, action) {
-        console.log(action.type, state);
         if(state === undefined) {
             return {
+                selected_id: null,
                 contents: [
                     { id: 1, title: 'HTML', desc: 'HTML is ...'},
                     { id: 2, title: 'CSS', desc: 'CSS is ...'},
                 ]
             }
         }
-
+        let newState;
+        if (action.type === 'SELECT') {
+           newState= Object.assign({}, state, { selected_id: action.id })
+        }
+        console.log(action, state, newState);
+        return newState
     }
     const store = Redux.createStore(
         reducer,
