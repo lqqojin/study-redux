@@ -30,7 +30,7 @@
                 <li>
                     <a onclick="
                         event.preventDefault();
-                        let action = { type: 'SELECT', id: ${ state.contents[i].id } };
+                        let action = { type: 'SELECT', mode: 'read', id: ${ state.contents[i].id } };
                         store.dispatch(action);
                         "
                         href="${state.contents[i].id}.html">
@@ -47,24 +47,72 @@
         `;
     }
     function control() {
+        let state = store.getState();
         document.querySelector('#control').innerHTML = `
              <ul>
-                <li><a href="/create">create</a></li>
+                <li><a href="/create" onclick="
+                    event.preventDefault();
+                    let action = { type: 'SELECT', mode: 'create', id: null }
+                    store.dispatch(action);
+                ">create</a></li>
                 <li><input type="button" value="delete"></li>
             </ul>
         `;
     }
     function article() {
-        document.querySelector('#content').innerHTML = `
+        let state = store.getState();
+        if (state.mode === 'create') {
+            document.querySelector("#content").innerHTML = `
+                <article>
+                    <form onsubmit="
+                        event.preventDefault();
+                        console.log(this.title);
+                        let _title = this.title.value;
+                        let _desc = this.desc.value;
+                        store.dispatch({
+                            type: 'CREATE',
+                            title: _title,
+                            desc: _desc
+                        });
+                    ">
+                        <p>
+                            <input type="text" name="title" placeholder="title">
+                        </p>
+                        <p>
+                            <textarea name="desc" placeholder="description"></textarea>
+                        </p>
+                        <p>
+                            <input type="submit">
+                        </p>
+                    </form>
+                </article>
+            `
+        } else if (state.mode === 'read') {
+            let i = 0;
+            let aTitle;
+            let aDesc;
+            const len = state.contents.length;
+            while (i < len) {
+                if(state.contents[i].id === state.selected_id) {
+                    aTitle = state.contents[i].title;
+                    aDesc = state.contents[i].desc
+                    break;
+                }
+                i += 1;
+            }
+            document.querySelector('#content').innerHTML = `
             <article>
-                <h2>HTML</h2>
-                HTML is ...
+                <h2>${aTitle}</h2>
+                ${aDesc}
             </article>
         `;
+        }
     }
     function reducer(state, action) {
         if(state === undefined) {
             return {
+                max_id: 2,
+                mode: 'create',
                 selected_id: null,
                 contents: [
                     { id: 1, title: 'HTML', desc: 'HTML is ...'},
@@ -74,7 +122,17 @@
         }
         let newState;
         if (action.type === 'SELECT') {
-           newState= Object.assign({}, state, { selected_id: action.id })
+           newState= Object.assign({}, state, { mode: action.mode, selected_id: action.id })
+        } else if (action.type === 'CREATE') {
+            let newMaxId = state.max_id + 1;
+            const newContents = state.contents.concat();
+            newContents.push({ id: newMaxId, title: action.title, desc: action.desc })
+            newState = Object.assign({}, state, {
+                max_id: newMaxId,
+                selected_id: newMaxId,
+                contents: newContents,
+                mode: 'read'
+            })
         }
         console.log(action, state, newState);
         return newState
@@ -83,6 +141,9 @@
         reducer,
         window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
     );
+    store.subscribe(article);
+    store.subscribe(TOC);
+    store.subscribe(control);
     subject();
     TOC();
     control();
