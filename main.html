@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.5/redux.js"></script>
+    <title>Redux</title>
 </head>
 <body>
     <div id="subject"></div>
@@ -20,12 +21,21 @@
     }
     function TOC() {
         // Table Of Content
+        let state = store.getState();
+        let i = 0;
+        let len = state.contents.length;
+        let liTags = '';
+        while (i < len) {
+            liTags = liTags + `
+                <li>
+                    <a href="${state.contents[i].id}.html">${state.contents[i].title}</a>
+                </li>
+            `;
+            i += 1;
+        }
         document.querySelector('#TOC').innerHTML = `
             <nav>
-                <ol>
-                    <li><a href="1.html">HTML</a></li>
-                    <li><a href="2.html">CSS</a></li>
-                </ol>
+                <ol>${liTags}</ol>
             </nav>
         `;
     }
@@ -45,6 +55,22 @@
             </article>
         `;
     }
+    function reducer(state, action) {
+        console.log(action.type, state);
+        if(state === undefined) {
+            return {
+                contents: [
+                    { id: 1, title: 'HTML', desc: 'HTML is ...'},
+                    { id: 2, title: 'CSS', desc: 'CSS is ...'},
+                ]
+            }
+        }
+
+    }
+    const store = Redux.createStore(
+        reducer,
+        window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+    );
     subject();
     TOC();
     control();
