@@ -58,6 +58,13 @@
                     ">create</a>
                 </li>
                 <li>
+                    <a href="/update" onclick="
+                        event.preventDefault();
+                        let action = { type: 'CHANGE_MODE', mode: 'update' }
+                        if(${state.selected_id !== null})store.dispatch(action);
+                    ">update</a>
+                </li>
+                <li>
                     <input type="button" value="delete" onclick="
                         if (${state.selected_id}) {
                             store.dispatch( { type: 'DELETE' });
@@ -97,7 +104,7 @@
             `
         } else if (state.mode === 'read') {
             let i = 0;
-            let aTitle = '생성필요';
+            let aTitle = '';
             let aDesc = '';
             const len = state.contents.length;
             while (i < len) {
@@ -114,7 +121,48 @@
                     ${aDesc}
                 </article>
             `;
-        }else if (state.mode === 'welcome') {
+        } else if (state.mode === 'update') {
+            let i = 0;
+            let aTitle = '';
+            let aDesc = '';
+            const len = state.contents.length;
+            while (i < len) {
+                if(state.contents[i].id === state.selected_id) {
+                    aTitle = state.contents[i].title;
+                    aDesc = state.contents[i].desc
+
+                    break;
+                }
+                i += 1;
+            }
+            console.log('aTitle', aTitle);
+            console.log('aDesc', aDesc);
+            document.querySelector('#content').innerHTML = `
+               <article>
+                    <form onsubmit="
+                        event.preventDefault();
+                        console.log(this.title);
+                        let _title = this.title.value;
+                        let _desc = this.desc.value;
+                        store.dispatch({
+                            type: 'UPDATE',
+                            title: _title,
+                            desc: _desc
+                        });
+                    ">
+                        <p>
+                            <input type="text" name="title" placeholder="title" value="${aTitle}">
+                        </p>
+                        <p>
+                            <textarea name="desc" placeholder="description">${aDesc}</textarea>
+                        </p>
+                        <p>
+                            <input type="submit">
+                        </p>
+                    </form>
+                </article>
+            `;
+        } else if (state.mode === 'welcome') {
             document.querySelector('#content').innerHTML = `
                 <article>
                     <h2>Welcome</h2>
@@ -170,11 +218,31 @@
                 contents: newContents,
                 selected_id: null,
             })
-        } else if (action.type === 'CHANGE_MODE') {
-            newState = Object.assign({}, state, {
-                selected_id: null,
-                mode: action.mode,
+        } else if (action.type === 'UPDATE') {
+
+            const newContents = state.contents.concat();
+            newContents.map((item) => {
+                if (state.selected_id === item.id) {
+                    item.title = action.title;
+                    item.desc = action.desc;
+                }
             })
+            newState = Object.assign({}, state, {
+                mode: 'read',
+                contents: newContents
+            })
+            return newState
+        } else if (action.type === 'CHANGE_MODE') {
+            if (action.mode === 'create') {
+                newState = Object.assign({}, state, {
+                    selected_id: null,
+                    mode: action.mode,
+                })
+            } else {
+                newState = Object.assign({}, state, {
+                    mode: action.mode,
+                })
+            }
         }
         console.log(action.type, action, state, newState);
         return newState
